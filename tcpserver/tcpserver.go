@@ -30,7 +30,7 @@ func (server *Tcpserver) Start() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	defer listener.Close() 
+	defer listener.Close()
 
 	server.Listener = listener
 	for {
