@@ -15,7 +15,7 @@ var mutex = &sync.Mutex{}
 
 func handleConn(conn net.Conn, server *Tcpserver) {
 	respChan := make(chan interface{}, 30)
-        errChan := make(chan interface{}, 30)
+	errChan := make(chan interface{}, 30)
 	defer func() {
 		fmt.Println("Close Connection")
 		atomic.AddInt32(&server.ConnectionCount, -1)
@@ -37,19 +37,19 @@ func handleConn(conn net.Conn, server *Tcpserver) {
 		if CheckRequestLimits(server.RequestLimits) {
 			go CallExternalAPI(server, lineRecv, respChan, errChan)
 		}
-			select {
-			case resp, ok :=  <-respChan:
-				if !ok {
-					continue
-				}
-				atomic.AddInt64(&server.ProcessedRequest, 1)
-				result := fmt.Sprintf("select channel work: %v", resp)
-				fmt.Fprintln(conn, result);
-			case err := <- errChan:
-				fmt.Fprintln(conn, err)
-			default: 
-				fmt.Println("nothing")
+		select {
+		case resp, ok := <-respChan:
+			if !ok {
+				continue
 			}
+			atomic.AddInt64(&server.ProcessedRequest, 1)
+			result := fmt.Sprintf("select channel work: %v", resp)
+			fmt.Fprintln(conn, result)
+		case err := <-errChan:
+			fmt.Fprintln(conn, err)
+		default:
+			fmt.Println("nothing")
+		}
 
 	}
 

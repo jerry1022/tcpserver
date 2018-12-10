@@ -3,14 +3,12 @@ package tcpserver
 import (
 	"fmt"
 	"net"
-	"os"
 	"strconv"
 	"sync/atomic"
 	"time"
 )
 
 type Tcpserver struct {
-	Addr             string
 	ConnectionCount  int32
 	Endpoint         string
 	IdleTimeout      int
@@ -25,21 +23,21 @@ func (server *Tcpserver) Start() {
 	fmt.Printf("Start Tcp Server at port: %d\n", server.Port)
 	fmt.Printf("Idle Timeout  %d sec\n", server.IdleTimeout)
 	fmt.Printf("HTTP Endpoint %s \n", server.Endpoint)
-	defer server.Stop()
 
 	go server.RestRequestLimits()
 
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(server.Port))
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
 	}
+	defer listener.Close() 
+
 	server.Listener = listener
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
 			fmt.Println(err)
-			continue
+			break
 		}
 		go handleConn(conn, server)
 	}
@@ -63,5 +61,8 @@ func (server *Tcpserver) RestRequestLimits() {
 
 func (server *Tcpserver) Stop() {
 	fmt.Println("Stop Tcp Server")
-	server.Listener.Close()
+	if server.Listener != nil {
+		server.Listener.Close()
+		server.Listener = nil
+	}
 }
